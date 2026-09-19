@@ -672,12 +672,17 @@ async function renderLiveTab(root, gid, apiToken) {
       <div class="api-row">
         <input id="api-base-input" placeholder="override address (optional)" value="${esc(localStorage.getItem("papyrus_api_base") || "")}" />
         <button type="button" class="btn btn-sm" id="api-base-save">Retry</button>
+        ${localStorage.getItem("papyrus_api_base") ? '<button type="button" class="btn btn-sm btn-ghost" id="api-base-reset">Reset to automatic</button>' : ""}
       </div>
-      <p class="live-note">The bot prints <code>web_api: serving on port …</code> in its console when the API is live.</p>`;
+      <p class="live-note">Currently connecting via: <code>${esc(base || "(none)")}</code> — the automatic route is this site's own proxy. The bot prints <code>web_api: serving on port …</code> in its console when the API is live.</p>`;
     root.querySelector("#api-base-save").addEventListener("click", () => {
       const v = root.querySelector("#api-base-input").value.trim();
       if (v) localStorage.setItem("papyrus_api_base", v);
       else localStorage.removeItem("papyrus_api_base");
+      renderLiveTab(root, gid, apiToken);
+    });
+    root.querySelector("#api-base-reset")?.addEventListener("click", () => {
+      localStorage.removeItem("papyrus_api_base");
       renderLiveTab(root, gid, apiToken);
     });
     return;
@@ -715,8 +720,22 @@ async function renderLiveTab(root, gid, apiToken) {
       <div class="live-card" style="grid-column: 1 / -1;"><h4>🐉 Boss Battles</h4><div id="boss-editor"></div></div>
     </div>`;
 
-  const cfg = await apiFetch(`/api/guild/${gid}/config`, {}, apiToken);
-  const conf = cfg.config || {};
+  let conf = {};
+  try {
+    const cfg = await apiFetch(`/api/guild/${gid}/config`, {}, apiToken);
+    conf = cfg.config || {};
+  } catch (e) {
+    const msg = e && e.status === 401
+      ? "Your Discord session expired — sign in again at the top of the page."
+      : e && e.status === 403
+      ? "The bot couldn't confirm you as an admin in this server. Are you still a member there?"
+      : "API error: " + (e.error || e.status || e);
+    root.innerHTML = `<p class="live-note">⚠️ ${esc(msg)}</p>
+      <p class="live-note muted">Connecting via: <code>${esc(apiBase() || "(none)")}</code></p>
+      <button type="button" class="btn btn-sm" id="live-retry">Retry</button>`;
+    root.querySelector("#live-retry").addEventListener("click", () => renderLiveTab(root, gid, apiToken));
+    return;
+  }
   const toggleKeys = Object.keys(conf).filter((k) =>
     k.endsWith("_enabled") || k.endsWith("_on") || TOGGLE_PREFIXES.some((p) => k.startsWith(p))
   );
@@ -864,7 +883,7 @@ openServerDash = function (guildId) {
         const pane = document.createElement("div");
         pane.id = "sd-tab-live";
         pane.hidden = true;
-        dash.querySelector("#sd-tab-admin")?.after(pane);
+        dash.appendChild(pane);
         tabs.insertAdjacentHTML("beforeend", '<button type="button" class="sd-tab" data-tab="live">⚡ Live Control</button>');
         dash.querySelectorAll(".sd-tab").forEach((t) =>
           t.addEventListener("click", () => {
@@ -887,7 +906,7 @@ openServerDash = function (guildId) {
     const pane = document.createElement("div");
     pane.id = "sd-tab-live";
     pane.hidden = true;
-    dash.querySelector("#sd-tab-admin")?.after(pane);
+    dash.appendChild(pane);
     tabs.insertAdjacentHTML("beforeend", '<button type="button" class="sd-tab" data-tab="live">⚡ Live Control</button>');
     dash.querySelectorAll(".sd-tab").forEach((t) =>
       t.addEventListener("click", () => {
