@@ -3,15 +3,17 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Status · The Great Papyrus</title>
+  <title>Dashboard · The Great Papyrus</title>
   <link rel="icon" type="image/png" href="favicon.png" />
+  <link rel="apple-touch-icon" href="favicon.png" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Pixelify+Sans:wght@400..700&family=VT323&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="style.css" />
 </head>
-<body>
-  <div class="page-transition" id="page-transition" aria-hidden="true"><div class="soul-loader">
+<body class="page-home">
+  <div class="page-transition" id="page-transition" aria-hidden="true">
+    <div class="soul-loader">
       <div class="sl-souls" aria-hidden="true">
         <span style="color:#ff4d5e">♥</span><span style="color:#3ec5ff">♥</span><span style="color:#ff9d2e">♥</span><span style="color:#2e6bff">♥</span><span style="color:#3ddc5a">♥</span><span style="color:#a44dff">♥</span><span style="color:#ffe93d">♥</span>
       </div>
@@ -19,11 +21,14 @@
         <span>🦴</span><span>🦴</span><span>🦴</span><span>🦴</span><span>🦴</span><span>🦴</span>
       </div>
       <div class="sl-soul" aria-hidden="true">♥</div>
-    </div></div>
-  <div class="bg-image bg-dim" aria-hidden="true"></div>
+    </div>
+  </div>
+
+  <div class="bg-image" aria-hidden="true"></div>
   <div class="bg-gradient" aria-hidden="true"></div>
   <div class="bg-grid" aria-hidden="true"></div>
   <div class="scanlines" aria-hidden="true"></div>
+  <div class="noise" aria-hidden="true"></div>
 
   <div class="bones-rain" aria-hidden="true">
     <span>🦴</span><span>🦴</span><span>🦴</span><span>🦴</span><span>🦴</span>
@@ -34,49 +39,48 @@
     <span>🍝</span><span>🍝</span><span>🍝</span><span>🍝</span><span>🍝</span><span>🍝</span>
   </div>
 
-  <nav class="nav">
+  <div class="bg-image" aria-hidden="true"></div>
+  <div class="bg-gradient" aria-hidden="true"></div>
+  <div class="bg-grid" aria-hidden="true"></div>
+  <div class="scanlines" aria-hidden="true"></div>
+  <div class="noise" aria-hidden="true"></div>
+
+  <div class="bones-rain" aria-hidden="true">
+    <span>🦴</span><span>🦴</span><span>🦴</span><span>🦴</span><span>🦴</span>
+    <span>🦴</span><span>🦴</span><span>🦴</span><span>🦴</span><span>🦴</span>
+  </div>
+  <div class="spaghetti-rain" aria-hidden="true">
+    <span>🍝</span><span>🍝</span><span>🍝</span><span>🍝</span><span>🍝</span>
+    <span>🍝</span><span>🍝</span><span>🍝</span><span>🍝</span><span>🍝</span><span>🍝</span>
+  </div>
+
+<nav class="nav">
     <a class="logo" href="index.html" data-nav>PAPYRUS<span>BOT V2</span></a>
     <div class="nav-links">
       <a href="index.html" data-nav>Home</a>
       <a href="commands.html" data-nav>Commands</a>
       <a href="changelog.html" data-nav>Changelog</a>
-      <a href="status.html" class="active" data-nav>Status</a>
-      <a href="dashboard.html" data-nav>Dashboard</a>
+      <a href="status.html" data-nav>Status</a>
+      <a href="dashboard.html" class="active" data-nav>Dashboard</a>
       <a class="btn btn-sm" href="https://discord.com/oauth2/authorize?client_id=1538157742546616370&permissions=2147485696&scope=bot%20applications.commands" target="_blank" rel="noopener">Invite</a>
     </div>
   </nav>
 
-  <main class="page">
-    <div class="page-head">
-      <img class="bot-avatar sm" src="bot-avatar.gif" alt="" />
-      <div>
-        <h1 class="glitch-title" data-text="System Status">System Status</h1>
-        <p class="lead">IS THE GREAT PAPYRUS ONLINE?</p>
-      </div>
-    </div>
-    <section class="panel status-panel">
-      <div class="status-header">
-        <span class="dot" id="status-dot"></span>
-        <div>
-          <h2 id="status-title">Checking…</h2>
-          <p class="muted" id="status-sub">Fetching bot state</p>
-        </div>
-      </div>
-      <div class="status-grid">
-        <div class="stat"><span class="stat-label">Bot</span><span class="stat-value" id="stat-bot">—</span></div>
-        <div class="stat"><span class="stat-label">Gateway</span><span class="stat-value" id="stat-gateway">—</span></div>
-        <div class="stat"><span class="stat-label">Last check</span><span class="stat-value" id="stat-time">—</span></div>
-        <div class="stat"><span class="stat-label">Message</span><span class="stat-value" id="stat-msg">—</span></div>
-      </div>
-      <button type="button" class="btn btn-ghost" id="refresh-status">Refresh</button>
-      <p class="muted small">Set <code>state</code> in <code>script.js</code>. Support: <a href="https://discord.gg/5XzKz3guN8" target="_blank" rel="noopener">discord.gg/5XzKz3guN8</a></p>
-    </section>
-    <section class="panel">
-      <h2>Incidents</h2>
-      <ul class="incident-list" id="incident-list"><li class="muted">No open incidents reported.</li></ul>
+  <main class="wrap">
+    <section class="panel me-panel" id="me" hidden>
+      <h2><span class="hash">#</span> My Servers</h2>
+      <p class="muted">Sign in to pick a server. Papyrus awaits.</p>
+      <p class="signin-row">
+        <button type="button" class="btn" id="real-signin">Sign in with Discord</button>
+        <button type="button" class="btn btn-ghost" id="demo-signin">Try demo</button>
+      </p>
     </section>
   </main>
-  <footer class="footer"><p><a href="index.html" data-nav>← Home</a></p></footer>
+
+  <footer class="footer">
+    <p>The Great Papyrus · not affiliated with Undertale / Toby Fox</p>
+    <p class="muted">Made by CrispyNugget (thedestroyeroffood)</p>
+  </footer>
   <script src="script.js"></script>
 </body>
 </html>

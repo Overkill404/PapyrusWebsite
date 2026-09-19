@@ -13,7 +13,15 @@
 </head>
 <body class="page-home">
   <div class="page-transition" id="page-transition" aria-hidden="true">
-    <div class="pt-glitch" data-text="LOADING…">LOADING…</div>
+    <div class="soul-loader">
+      <div class="sl-souls" aria-hidden="true">
+        <span style="color:#ff4d5e">♥</span><span style="color:#3ec5ff">♥</span><span style="color:#ff9d2e">♥</span><span style="color:#2e6bff">♥</span><span style="color:#3ddc5a">♥</span><span style="color:#a44dff">♥</span><span style="color:#ffe93d">♥</span>
+      </div>
+      <div class="sl-bones" aria-hidden="true">
+        <span>🦴</span><span>🦴</span><span>🦴</span><span>🦴</span><span>🦴</span><span>🦴</span>
+      </div>
+      <div class="sl-soul" aria-hidden="true">♥</div>
+    </div>
   </div>
 
   <div class="bg-image" aria-hidden="true"></div>
@@ -77,6 +85,7 @@
           <a class="btn" href="https://discord.com/oauth2/authorize?client_id=1538157742546616370&permissions=2147485696&scope=bot%20applications.commands" target="_blank" rel="noopener">Add to Server</a>
           <a class="btn btn-ghost" href="https://discord.gg/5XzKz3guN8" target="_blank" rel="noopener">Support</a>
           <a class="btn btn-ghost" href="status.html" data-nav>Status</a>
+          <a class="btn btn-ghost" href="dashboard.html" data-nav>My Dashboard</a>
         </div>
         <p class="status-pill" id="status-pill">
           <span class="dot"></span> <span id="status-pill-text">Checking status…</span>
@@ -140,13 +149,11 @@
       <p class="mb-hint">* click a skeleton. they've been arguing for hours.</p>
     </section>
 
-    <!-- Sign in / My servers (hidden until signed in) -->
-    <section class="panel me-panel" id="me" hidden>
+    <section class="panel me-panel" id="dashboard-cta">
       <h2><span class="hash">#</span> My Servers</h2>
-      <p class="muted">Sign in to pick a server. Papyrus awaits.</p>
+      <p class="muted">Sign in to pick a server, run its dashboard, and control it LIVE from the web.</p>
       <p class="signin-row">
-        <button type="button" class="btn" id="real-signin">Sign in with Discord</button>
-        <button type="button" class="btn btn-ghost" id="demo-signin">Try demo</button>
+        <a class="btn" href="dashboard.html" data-nav>Open Dashboard</a>
       </p>
     </section>
     <section class="panel">

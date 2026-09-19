@@ -980,3 +980,40 @@ h1, h2, h3, h4, .logo, .glitch-title, .tag { font-family: "Pixelify Sans", "Cour
 .bp-bar.you i { background: linear-gradient(90deg, #ffd52e, #fff3a0); }
 .bp-bar.boss i { background: linear-gradient(90deg, #e8283f, #ff6b7d); }
 .bp-verdict { font-weight: 900; margin-top: 8px; color: var(--orange); }
+
+/* ---------------- soul loader (page transition) ----------------
+   7 human souls orbit outside, bones spin in a circle inside,
+   your (white) SOUL sits in the middle keeping the beat. */
+.soul-loader { position: relative; width: 230px; height: 230px; }
+.sl-souls, .sl-bones { position: absolute; inset: 0; pointer-events: none; }
+.sl-souls { animation: sl-orbit 2.6s linear infinite; }
+.sl-bones { animation: sl-orbit-rev 1.7s linear infinite; }
+.sl-souls span {
+  position: absolute; left: 50%; top: 50%;
+  font-size: 17px; text-shadow: 0 0 8px currentColor;
+}
+.sl-souls span:nth-child(1) { transform: rotate(0deg) translateY(-106px); }
+.sl-souls span:nth-child(2) { transform: rotate(51.4deg) translateY(-106px); }
+.sl-souls span:nth-child(3) { transform: rotate(102.9deg) translateY(-106px); }
+.sl-souls span:nth-child(4) { transform: rotate(154.3deg) translateY(-106px); }
+.sl-souls span:nth-child(5) { transform: rotate(205.7deg) translateY(-106px); }
+.sl-souls span:nth-child(6) { transform: rotate(257.1deg) translateY(-106px); }
+.sl-souls span:nth-child(7) { transform: rotate(308.6deg) translateY(-106px); }
+.sl-bones span {
+  position: absolute; left: 50%; top: 50%;
+  font-size: 22px; filter: grayscale(1) brightness(1.7);
+}
+.sl-bones span:nth-child(1) { transform: rotate(0deg) translateY(-62px); }
+.sl-bones span:nth-child(2) { transform: rotate(60deg) translateY(-62px); }
+.sl-bones span:nth-child(3) { transform: rotate(120deg) translateY(-62px); }
+.sl-bones span:nth-child(4) { transform: rotate(180deg) translateY(-62px); }
+.sl-bones span:nth-child(5) { transform: rotate(240deg) translateY(-62px); }
+.sl-bones span:nth-child(6) { transform: rotate(300deg) translateY(-62px); }
+.sl-soul {
+  color: #ffffff; font-size: 30px; line-height: 1;
+  text-shadow: 0 0 12px #ffffff, 0 0 28px rgba(255,255,255,0.7);
+  animation: sl-beat 1.1s ease-in-out infinite;
+}
+@keyframes sl-orbit { to { transform: rotate(360deg); } }
+@keyframes sl-orbit-rev { to { transform: rotate(-360deg); } }
+@keyframes sl-beat { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.3); } }

@@ -152,7 +152,7 @@ function renderAuth() {
       const av = ME.bot || !ME.id
         ? "bot-avatar.gif"
         : `https://cdn.discordapp.com/avatars/${ME.id}/${ME.avatar}.png?size=64`;
-      slot.innerHTML = `<a class="nav-user" href="index.html#me" data-nav><img src="${av}" alt="" class="nav-pfp" /> ${esc(name)}</a>`;
+      slot.innerHTML = `<a class="nav-user" href="dashboard.html" data-nav><img src="${av}" alt="" class="nav-pfp" /> ${esc(name)}</a>`;
     } else {
       slot.innerHTML = `<button type="button" class="btn btn-sm btn-ghost" id="signin-btn">Sign in</button>`;
     }
@@ -160,11 +160,12 @@ function renderAuth() {
     slot.querySelector("#signin-btn")?.addEventListener("click", () => startSignIn());
   }
 
-  // #me section only exists on index
+  // #me section: the full dashboard on dashboard.html; hidden elsewhere unless signed in
   const me = document.getElementById("me");
   if (!me) return;
+  const onDashPage = location.pathname.endsWith("dashboard.html");
   if (!ME) {
-    me.hidden = true;
+    me.hidden = !onDashPage;
     return;
   }
   me.hidden = false;
@@ -893,7 +894,15 @@ openServerDash = function (guildId) {
         );
         // render connect UI lazily on tab click
         tabs.querySelectorAll("[data-tab='live']").forEach((t) =>
-          t.addEventListener("click", () => renderLiveTab(dash.querySelector("#sd-tab-live"), guildId, localStorage.getItem(TOKEN_KEY)))
+          t.addEventListener("click", () => {
+            const live = dash.querySelector("#sd-tab-live");
+            if (!live) return;
+            live.hidden = false;
+            live.innerHTML = '<p class="live-note">⏳ connecting to your bot…</p>';
+            renderLiveTab(live, guildId, localStorage.getItem(TOKEN_KEY)).catch((e) => {
+              live.innerHTML = '<p class="live-note">⚠️ Live Control crashed: ' + esc(String(e)) + '</p>';
+            });
+          })
         );
       }
     }
@@ -915,7 +924,15 @@ openServerDash = function (guildId) {
       })
     );
     tabs.querySelectorAll("[data-tab='live']").forEach((t) =>
-      t.addEventListener("click", () => renderLiveTab(dash.querySelector("#sd-tab-live"), guildId, localStorage.getItem(TOKEN_KEY)))
+      t.addEventListener("click", () => {
+        const live = dash.querySelector("#sd-tab-live");
+        if (!live) return;
+        live.hidden = false;
+        live.innerHTML = '<p class="live-note">⏳ connecting to your bot…</p>';
+        renderLiveTab(live, guildId, localStorage.getItem(TOKEN_KEY)).catch((e) => {
+          live.innerHTML = '<p class="live-note">⚠️ Live Control crashed: ' + esc(String(e)) + '</p>';
+        });
+      })
     );
   }
 };
