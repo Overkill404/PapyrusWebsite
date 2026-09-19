@@ -985,7 +985,8 @@ h1, h2, h3, h4, .logo, .glitch-title, .tag { font-family: "Pixelify Sans", "Cour
 /* ---------------- soul loader (page transition) ----------------
    7 human souls orbit outside, bones spin in a circle inside,
    your (white) SOUL sits in the middle keeping the beat. */
-.soul-loader { position: relative; width: 230px; height: 230px; }
+.soul-loader { position: relative; width: 230px; height: 230px; transform: scale(2.5); }
+@media (max-width: 700px) { .soul-loader { transform: scale(1.35); } }
 .sl-souls, .sl-bones { position: absolute; inset: 0; pointer-events: none; }
 .sl-souls span {
   position: absolute; left: 50%; top: 50%;
