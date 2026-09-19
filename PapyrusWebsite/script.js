@@ -152,7 +152,9 @@ function renderAuth() {
       const av = ME.bot || !ME.id
         ? "bot-avatar.gif"
         : `https://cdn.discordapp.com/avatars/${ME.id}/${ME.avatar}.png?size=64`;
-      slot.innerHTML = `<a class="nav-user" href="dashboard.html" data-nav><img src="${av}" alt="" class="nav-pfp" /> ${esc(name)}</a>`;
+      slot.innerHTML = `<a class="nav-user" href="dashboard.html" data-nav><img src="${av}" alt="" class="nav-pfp" /> ${esc(name)}</a>
+        <button type="button" class="btn btn-sm btn-ghost" id="nav-signout">Sign out</button>`;
+      slot.querySelector("#nav-signout")?.addEventListener("click", signOut);
     } else {
       slot.innerHTML = `<button type="button" class="btn btn-sm btn-ghost" id="signin-btn">Sign in</button>`;
     }
@@ -558,12 +560,17 @@ function renderAdminDir(root) {
       </div>
     </div>`).join("");
   root.innerHTML = `
-    <p class="sd-note">The ENTIRE admin suite, mirrored from the bot's admin panel. Web control wires up when the bot's API lands — until then, each tool's panel lives in Discord under <code>/admin</code>.</p>
+    <p class="sd-note">The ENTIRE admin suite, mirrored from the bot's admin panel. Click any tool to jump into <strong>Live Control</strong> and edit it for this server right from the site.</p>
     ${html}`;
   root.querySelectorAll(".fn-chip").forEach((c) =>
-    c.addEventListener("click", () =>
-      sdToast(`🛡️ ${c.dataset.tool} — opens from the bot's Admin Panel (/admin in Discord). Web control coming soon!`)
-    )
+    c.addEventListener("click", () => {
+      if (window.__papyrusOpenLive) {
+        window.__papyrusOpenLive();
+        sdToast(`🛡️ ${c.dataset.tool} — edit it in Live Control!`);
+      } else {
+        sdToast("Sign in and open a server dashboard to control this tool.");
+      }
+    })
   );
 }
 
@@ -885,6 +892,7 @@ openServerDash = function (guildId) {
   dash.appendChild(pane);
   tabs.insertAdjacentHTML("beforeend", '<button type="button" class="sd-tab" data-tab="live">⚡ Live Control</button>');
   const liveBtn = tabs.querySelector("[data-tab='live']");
+  window.__papyrusOpenLive = showLive; // admin chips call this
 
   const showLive = () => {
     // own the whole tab switch: hide player/admin, show live, fix active styles
