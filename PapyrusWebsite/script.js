@@ -1,4 +1,4 @@
-console.log("PAPYRUS SITE BUILD v7");
+console.log("PAPYRUS SITE BUILD v8");
 const STATUS_CONFIG = {
   state: "online", // "online" | "offline" | "degraded"
   message: "The Great Papyrus is operational. Probably making puzzles.",
