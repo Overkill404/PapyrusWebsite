@@ -779,7 +779,8 @@ async function renderLiveTab(root, gid, apiToken) {
   if (warn) warn.addEventListener("click", async () => {
     try {
       await apiFetch(`/api/guild/${gid}/mod/warn`, { method: "POST", body: JSON.stringify({ user_id: root.querySelector("#mod-user").value, reason: root.querySelector("#mod-reason").value, severity: root.querySelector("#mod-sev").value }) }, apiToken);
-      sdToast("🛡️ warning delivered!");
+      const r = await apiFetch(`/api/guild/${gid}/mod/warn`, { method: "POST", body: JSON.stringify({ user_id: root.querySelector("#mod-user").value, reason: root.querySelector("#mod-reason").value, severity: root.querySelector("#mod-sev").value }) }, apiToken);
+      sdToast(r.escalated ? "🛡️ warning delivered — THEY HIT THE LIMIT and escalated to a strike!" : `🛡️ warning delivered (${r.active_warnings}/${r.escalates_at} toward a strike)`);
     } catch (e) { sdToast("❌ " + (e.error || e)); }
   });
   const to = root.querySelector("#to-btn");
