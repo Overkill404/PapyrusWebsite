@@ -1,0 +1,3 @@
+# Live Control proxy: the https site calls its own /api/ path,
+# Netlify forwards it to the bot's web API on WispByte (m42).
+/api/* http://78.154.103.11:15657/api/:splat 200!

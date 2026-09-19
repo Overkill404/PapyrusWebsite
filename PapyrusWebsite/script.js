@@ -606,7 +606,12 @@ document.addEventListener("DOMContentLoaded", () => setupBanter());
    LIVE CONTROL — dashboard v2, wired to the bot's web API (m42)
 ===================================================================== */
 function apiBase() {
-  return (window.PAPYRUS_API_BASE || localStorage.getItem("papyrus_api_base") || "").replace(/\/$/, "");
+  const saved = (window.PAPYRUS_API_BASE || localStorage.getItem("papyrus_api_base") || "").replace(/\/$/, "");
+  if (saved) return saved;
+  // Default: this site's own origin — the Netlify _redirects proxy forwards
+  // /api/* to the bot on WispByte, which sidesteps the mixed-content block.
+  const origin = window.location.origin || "";
+  return origin.startsWith("http") ? origin : "";
 }
 
 async function apiFetch(path, opts = {}, token = null) {
@@ -642,15 +647,16 @@ async function renderLiveTab(root, gid, apiToken) {
   }
   if (!online) {
     root.innerHTML = `
-      <p class="live-note">⚡ <strong>Live Control</strong> edits your server straight from the website — it needs the bot's API address. Paste it once (it's your bot host's IP/domain + port, e.g. <code>http://your-wispbyte-server:8080</code>).</p>
+      <p class="live-note">⚡ <strong>Live Control</strong> is wired through this site's secure proxy — no address to paste. It just can't reach the bot right now: make sure the bot is running with the new files and its API port is open.</p>
       <div class="api-row">
-        <input id="api-base-input" placeholder="http://bot-host:8080" value="${esc(base)}" />
-        <button type="button" class="btn btn-sm" id="api-base-save">Connect</button>
+        <input id="api-base-input" placeholder="override address (optional)" value="${esc(localStorage.getItem("papyrus_api_base") || "")}" />
+        <button type="button" class="btn btn-sm" id="api-base-save">Retry</button>
       </div>
-      <p class="live-note">No address yet? The bot prints <code>web_api: serving on port …</code> in its console when it starts.</p>`;
+      <p class="live-note">The bot prints <code>web_api: serving on port …</code> in its console when the API is live.</p>`;
     root.querySelector("#api-base-save").addEventListener("click", () => {
       const v = root.querySelector("#api-base-input").value.trim();
       if (v) localStorage.setItem("papyrus_api_base", v);
+      else localStorage.removeItem("papyrus_api_base");
       renderLiveTab(root, gid, apiToken);
     });
     return;
