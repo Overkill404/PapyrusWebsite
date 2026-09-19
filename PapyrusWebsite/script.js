@@ -726,6 +726,14 @@ async function renderLiveTab(root, gid, apiToken) {
       </div>
       <div class="live-card" style="grid-column: 1 / -1;"><h4>🛒 Shop Editor</h4><div id="boss-shop"></div></div>
       <div class="live-card" style="grid-column: 1 / -1;"><h4>🐉 Boss Battles</h4><div id="boss-editor"></div></div>
+      <div class="live-card" style="grid-column: 1 / -1;"><h4>🗄️ Game Data — edit everything</h4>
+        <p class="muted" style="margin:0 0 8px">Every content table in the bot: bosses, items, gear, abilities, universes, levels, zones, recipes, fish, quests and more. Pick a table, edit fields, save.</p>
+        <div class="live-form">
+          <select id="data-table-pick" style="max-width:260px"></select>
+          <button type="button" class="btn btn-sm" id="data-table-load">Open</button>
+        </div>
+        <div id="data-table-view"></div>
+      </div>
     </div>`;
 
   let conf = {};
@@ -875,6 +883,77 @@ async function renderLiveTab(root, gid, apiToken) {
       } catch (e) { sdToast("❌ " + (e.error || e)); }
     });
   } catch (e) { /* bosses table optional */ }
+
+  // generic game data editor — every content table the bot exposes
+  try {
+    const pick = root.querySelector("#data-table-pick");
+    const view = root.querySelector("#data-table-view");
+    const meta = await apiFetch(`/api/guild/${gid}/tables`, {}, apiToken);
+    const tables = Object.keys(meta.tables || {}).sort();
+    pick.innerHTML = tables.map((t) => `<option value="${esc(t)}">${esc(t)}</option>`).join("");
+
+    const loadTable = async () => {
+      const table = pick.value;
+      if (!table) return;
+      view.innerHTML = '<p class="muted">loading…</p>';
+      let cols = meta.tables[table] || [];
+      cols = cols.filter((c) => c !== "guild_id");
+      try {
+        const data = await apiFetch(`/api/guild/${gid}/table/${table}?limit=200`, {}, apiToken);
+        const rows = data.rows || [];
+        const cell = (c, v) => `<input data-col="${esc(c)}" value="${esc(v === null || v === undefined ? "" : v)}" style="min-width:70px" />`;
+        view.innerHTML = `
+          <table class="mini-table" style="margin-top:10px">
+            <tr>${cols.map((c) => `<th>${esc(c)}</th>`).join("")}<th></th><th></th></tr>
+            ${rows.map((r) => `<tr data-row="${r.id}">
+              ${cols.map((c) => `<td>${cell(c, r[c])}</td>`).join("")}
+              <td><button type="button" class="btn btn-sm" data-save="${r.id}">💾</button></td>
+              <td><button type="button" class="mini-x" data-del="${r.id}">✕</button></td>
+            </tr>`).join("")}
+          </table>
+          <div class="live-form" style="margin-top:8px">
+            ${cols.filter((c) => c !== "id").map((c) => `<input data-new="${esc(c)}" placeholder="${esc(c)}" style="min-width:90px" />`).join("")}
+            <button type="button" class="btn btn-sm" id="data-add">Add to ${esc(table)}</button>
+          </div>
+          <p class="muted" style="margin:6px 0 0">${esc(table)}: ${rows.length} row(s). Edit any field and hit 💾 — changes go live in Discord instantly.</p>`;
+        view.querySelectorAll("[data-save]").forEach((b) =>
+          b.addEventListener("click", async () => {
+            const tr = view.querySelector(`tr[data-row="${b.dataset.save}"]`);
+            const body = {};
+            tr.querySelectorAll("input[data-col]").forEach((inp) => { body[inp.dataset.col] = inp.value; });
+            try {
+              await apiFetch(`/api/guild/${gid}/table/${table}/${b.dataset.save}`, { method: "POST", body: JSON.stringify(body) }, apiToken);
+              sdToast(`💾 ${table} #${b.dataset.save} saved!`);
+            } catch (e) { sdToast("❌ " + (e.error || e)); }
+          })
+        );
+        view.querySelectorAll("[data-del]").forEach((b) =>
+          b.addEventListener("click", async () => {
+            try {
+              await apiFetch(`/api/guild/${gid}/table/${table}/${b.dataset.del}`, { method: "DELETE" }, apiToken);
+              view.querySelector(`tr[data-row="${b.dataset.del}"]`)?.remove();
+              sdToast("🗑️ row deleted");
+            } catch (e) { sdToast("❌ " + (e.error || e)); }
+          })
+        );
+        view.querySelector("#data-add").addEventListener("click", async () => {
+          const body = {};
+          view.querySelectorAll("input[data-new]").forEach((inp) => { if (inp.value.trim() !== "") body[inp.dataset.new] = inp.value; });
+          try {
+            await apiFetch(`/api/guild/${gid}/table/${table}`, { method: "POST", body: JSON.stringify(body) }, apiToken);
+            sdToast(`✅ added to ${table}!`);
+            loadTable();
+          } catch (e) { sdToast("❌ " + (e.error || e)); }
+        });
+      } catch (e) {
+        view.innerHTML = `<p class="live-note">⚠️ couldn't load ${esc(table)}: ${esc(e.error || e.status || String(e))}</p>`;
+      }
+    };
+    root.querySelector("#data-table-load").addEventListener("click", loadTable);
+    pick.addEventListener("change", loadTable);
+    if (tables.length) { pick.value = tables.includes("bosses") ? "bosses" : tables[0]; loadTable(); }
+    else view.innerHTML = '<p class="muted">No editable tables yet — update the bot files.</p>';
+  } catch (e) { /* tables endpoint optional (old bot files) */ }
 }
 
 // hook the Live Control tab into the server dashboard
