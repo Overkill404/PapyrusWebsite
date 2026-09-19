@@ -3,11 +3,14 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Error! Sans The Second</title>
+  <title>The Great Papyrus</title>
   <!-- Tab icon: put favicon.ico or favicon.gif in this folder -->
   <link rel="icon" href="favicon.gif" type="image/gif" />
   <link rel="icon" href="favicon.ico" sizes="any" />
   <link rel="apple-touch-icon" href="favicon.gif" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Pixelify+Sans:wght@400..700&family=VT323&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="style.css" />
 </head>
 <body class="page-home">
@@ -21,8 +24,17 @@
   <div class="scanlines" aria-hidden="true"></div>
   <div class="noise" aria-hidden="true"></div>
 
+  <div class="bones-rain" aria-hidden="true">
+    <span>🦴</span><span>🦴</span><span>🦴</span><span>🦴</span><span>🦴</span>
+    <span>🦴</span><span>🦴</span><span>🦴</span><span>🦴</span><span>🦴</span>
+  </div>
+  <div class="spaghetti-rain" aria-hidden="true">
+    <span>🍝</span><span>🍝</span><span>🍝</span><span>🍝</span><span>🍝</span>
+    <span>🍝</span><span>🍝</span><span>🍝</span><span>🍝</span><span>🍝</span><span>🍝</span>
+  </div>
+
   <nav class="nav">
-    <a class="logo" href="index.html" data-nav>ERROR!<span>SANS</span></a>
+    <a class="logo" href="index.html" data-nav>PAPYRUS<span>BOT V2</span></a>
     <div class="nav-links">
       <a href="index.html" class="active" data-nav>Home</a>
       <a href="commands.html" data-nav>Commands</a>
@@ -37,30 +49,31 @@
       <!-- Bot GIF + 6 human souls -->
       <div class="avatar-stage">
         <div class="soul-orbit" aria-hidden="true">
-          <span class="soul s-cyan" title="Patience">♥</span>
-          <span class="soul s-orange" title="Bravery">♥</span>
-          <span class="soul s-blue" title="Integrity">♥</span>
-          <span class="soul s-purple" title="Perseverance">♥</span>
-          <span class="soul s-green" title="Kindness">♥</span>
-          <span class="soul s-yellow" title="Justice">♥</span>
+          <span class="soul">🦴</span>
+          <span class="soul">🦴</span>
+          <span class="soul">🦴</span>
+          <span class="soul">🦴</span>
+          <span class="soul">🦴</span>
+          <span class="soul">🦴</span>
         </div>
         <div class="avatar-ring"></div>
         <div class="avatar-glitch">
-          <img class="bot-avatar" src="bot-avatar.gif" alt="Error! Sans The Second" id="bot-avatar" />
+          <div class="pfp-banner" aria-hidden="true"></div>
+          <img class="bot-avatar" src="bot-avatar.gif" alt="The Great Papyrus" id="bot-avatar" />
         </div>
-        <p class="avatar-caption">* six souls. one glitch.</p>
+        <p class="avatar-caption">* nyeh heh heh!</p>
       </div>
 
       <div class="hero-copy">
         <p class="tag">Undertale AU · Discord RPG</p>
-        <h1 class="glitch-title" data-text="Error! Sans The Second">Error! Sans The Second</h1>
+        <h1 class="glitch-title" data-text="THE GREAT PAPYRUS">THE GREAT PAPYRUS</h1>
         <div class="textbox">
-          <p><span class="star">*</span> you feel like you're going to have a <em>bad time</em>.</p>
-          <p><span class="star">*</span> strings hum. inventories open. bosses wait.</p>
+          <p><span class="star">*</span> HALLO! I AM THE GREAT PAPYRUS. YOU HAVE MADE AN <em>EXCELLENT DECISION</em> VISITING.</p>
+          <p><span class="star">*</span> BOSSES AWAIT. ECONOMIES FLOURISH. PUZZLES… EVERYWHERE.</p>
         </div>
         <p class="lead flicker-soft">
-          Turn-based bosses · Universes · Rebirth &amp; Ascend · Boss Rush · Crafting.
-          Error remembers your lines — and your GIFs.
+          99 slash commands · World bosses · Economy &amp; heists · Clans &amp; wars · Weather ·
+          Fishing, jobs, mysteries. THE ROYAL GUARD IS WATCHING (kindly).
         </p>
         <div class="hero-actions">
           <a class="btn" href="https://discord.com/oauth2/authorize?client_id=1538157742546616370&permissions=2147485696&scope=bot%20applications.commands" target="_blank" rel="noopener">Add to Server</a>
@@ -73,23 +86,22 @@
       </div>
     </div>
 
-    <!-- Mini Error Sans battle -->
+    <!-- Mini Papyrus battle -->
     <section class="mini-battle" aria-label="Mini battle demo">
       <div class="mb-frame">
         <div class="mb-stage">
-          <img class="error-sprite" src="error-sprite.gif" alt="Error Sans"
-               onerror="this.src='bot-avatar.gif'; this.onerror=null;" />
+          <img class="error-sprite" src="battle-sprite.png" alt="The Great Papyrus" id="battle-sprite" />
           <div class="mb-bones" aria-hidden="true"></div>
         </div>
         <div class="mb-hud">
           <div class="mb-names">
-            <span>ERROR SANS</span>
-            <span class="lv">LV 99</span>
+            <span>THE GREAT PAPYRUS</span>
+            <span class="lv">LV 1*</span>
           </div>
           <div class="mb-hp">
-            <span>HP</span>
+            <span>BOSS</span>
             <div class="mb-bar"><i class="boss"></i></div>
-            <span>9999/9999</span>
+            <span id="mini-boss-nums">300/300</span>
           </div>
           <div class="mb-hp">
             <span class="you">YOU</span>
@@ -97,7 +109,7 @@
             <span id="mini-you-nums">20/20</span>
           </div>
           <div class="mb-dialogue" id="mini-dialogue">
-            <span class="star">*</span> <span id="mini-line">heh. still standing?</span>
+            <span class="star">*</span> <span id="mini-line">NYEH HEH HEH! STILL STANDING?</span>
           </div>
           <div class="mb-acts">
             <button type="button" class="mb-act" data-act="fight">FIGHT</button>
@@ -107,33 +119,60 @@
           </div>
         </div>
       </div>
-      <p class="mb-hint">* click ACT options — demo only, not a real fight</p>
+      <p class="mb-hint">* a real tiny fight — spare him, he'd love that</p>
     </section>
   </header>
 
   <main>
+    <!-- The brothers — clickable sprites with banter bubbles -->
+    <section class="panel" id="hangout">
+      <h2><span class="hash">#</span> The Brothers</h2>
+      <div class="hangout-stage" id="hangout-stage">
+        <div class="banter-actor" data-actor="papyrus">
+          <div class="bubble papyrus" id="bubble-papyrus" hidden><span class="who">PAPYRUS</span><span class="b-line"></span></div>
+          <img class="actor-img" src="papyrus-sprite.png" alt="Papyrus" />
+          <p class="actor-name">PAPYRUS</p>
+        </div>
+        <div class="banter-actor" data-actor="sans">
+          <div class="bubble" id="bubble-sans" hidden><span class="who">SANS</span><span class="b-line"></span></div>
+          <img class="actor-img" src="sans-sprite.png" alt="Sans" />
+          <p class="actor-name">SANS</p>
+        </div>
+      </div>
+      <p class="mb-hint">* click a skeleton. they've been arguing for hours.</p>
+    </section>
+
+    <!-- Sign in / My servers (hidden until signed in) -->
+    <section class="panel me-panel" id="me" hidden>
+      <h2><span class="hash">#</span> My Servers</h2>
+      <p class="muted">Sign in to pick a server. Papyrus awaits.</p>
+      <p class="signin-row">
+        <button type="button" class="btn" id="real-signin">Sign in with Discord</button>
+        <button type="button" class="btn btn-ghost" id="demo-signin">Try demo</button>
+      </p>
+    </section>
     <section class="panel">
       <h2><span class="hash">#</span> Features</h2>
       <div class="grid">
-        <article class="card"><h3>⚔️ Combat</h3><p>Solo &amp; team fights, phases, ACT, abilities, Boss Rush.</p></article>
-        <article class="card"><h3>🌌 Universes</h3><p>Universe → level. Locks, portals, progression gates.</p></article>
-        <article class="card"><h3>✨ Progression</h3><p>Rebirth, Ascend, shards, crafts, kill roles &amp; tags.</p></article>
-        <article class="card"><h3>👑 Admin</h3><p>Paged tools — bosses, shop, worlds, Error GIFs.</p></article>
+        <article class="card"><h3>⚔️ Combat</h3><p>Solo &amp; team fights, phases, ACT, abilities, world bosses, Boss Rush.</p></article>
+        <article class="card"><h3>💰 Economy</h3><p>Jobs, fishing, stocks, bank, heists, auctions, prestige shop, player stalls.</p></article>
+        <article class="card"><h3>🛡️ Guard</h3><p>Moderation, SOUL Integrity trust scores, quarantine cells, player proof logs.</p></article>
+        <article class="card"><h3>🧩 Adventure</h3><p>Universes, clans &amp; wars, weather, gathering, pets, puzzles, mysteries.</p></article>
       </div>
     </section>
     <section class="panel">
       <h2><span class="hash">#</span> Quick start</h2>
       <ol class="steps">
         <li>Invite the bot → <code>/start</code></li>
-        <li><code>/inventory</code> — shop, craft, combat, progress</li>
-        <li>Open the portal · pick a universe · fight</li>
+        <li><code>/backpack</code> — gear, skills, pets, everything you carry</li>
+        <li><code>/explore</code> · <code>/summon</code> · fight. NYEH HEH HEH!</li>
       </ol>
-      <p class="dialogue tight"><span class="star">*</span> determination filled your inventory slots.</p>
+      <p class="dialogue tight"><span class="star">*</span> you are filled with… spaghetti-based determination.</p>
     </section>
   </main>
 
   <footer class="footer">
-    <p>Error! Sans The Second · not affiliated with Undertale / Toby Fox</p>
+    <p>The Great Papyrus · not affiliated with Undertale / Toby Fox</p>
     <p class="muted">Made by CrispyNugget (thedestroyeroffood)</p>
   </footer>
   <script src="script.js"></script>
