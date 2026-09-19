@@ -985,7 +985,6 @@ openServerDash = function (guildId) {
   dash.appendChild(pane);
   tabs.insertAdjacentHTML("beforeend", '<button type="button" class="sd-tab" data-tab="live">⚡ Live Control</button>');
   const liveBtn = tabs.querySelector("[data-tab='live']");
-  window.__papyrusOpenLive = showLive; // admin chips call this
 
   const showLive = () => {
     // own the whole tab switch: hide player/admin, show live, fix active styles
@@ -1000,6 +999,7 @@ openServerDash = function (guildId) {
     });
   };
   liveBtn.addEventListener("click", showLive);
+  window.__papyrusOpenLive = showLive; // admin chips call this (after showLive exists!)
 
   // when the original player/admin tabs are clicked, hide the live pane
   dash.querySelectorAll(".sd-tab:not([data-tab='live'])").forEach((t) =>
