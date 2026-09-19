@@ -155,7 +155,8 @@ function renderAuth() {
     ? "bot-avatar.gif"
     : `https://cdn.discordapp.com/avatars/${ME.id}/${ME.avatar}.png?size=128`;
 
-  const cards = GUILDS.map((g) => {
+  const adminGuilds = GUILDS.filter((g) => (parseInt(g.permissions || "0", 10) & MANAGE_GUILD) !== 0 || g.owner);
+  const cards = adminGuilds.map((g) => {
     const canAdd = (parseInt(g.permissions || "0", 10) & MANAGE_GUILD) !== 0 || g.owner;
     const addBtn = canAdd
       ? `<a class="btn btn-sm" target="_blank" rel="noopener" href="https://discord.com/oauth2/authorize?client_id=${CLIENT_ID}&permissions=2147485696&scope=bot%20applications.commands&guild_id=${g.id}">Add Papyrus</a>`
@@ -173,11 +174,11 @@ function renderAuth() {
       <img class="me-pfp" src="${av}" alt="" />
       <div>
         <p class="me-hi">WELCOME BACK, <strong>${esc(name.toUpperCase())}</strong>!${IS_DEMO ? ' <span class="demo-tag">demo</span>' : ""}</p>
-        <p class="muted">${GUILDS.length} server${GUILDS.length === 1 ? "" : "s"} · pick one to see its dashboard, or add Papyrus where he's missing.</p>
+        <p class="muted">${adminGuilds.length} server${adminGuilds.length === 1 ? "" : "s"} you own or moderate — pick one for its dashboard, or add Papyrus where he's missing.</p>
       </div>
       <button type="button" class="btn btn-sm btn-ghost" id="signout-btn">Sign out</button>
     </div>
-    <div class="g-grid">${cards || '<p class="muted">No servers yet — invite Papyrus to one!</p>'}</div>
+    <div class="g-grid">${cards || '<p class="muted">No servers with admin access yet — invite Papyrus to one from Discord!</p>'}</div>
     <div id="server-dash" hidden></div>
   `;
 
