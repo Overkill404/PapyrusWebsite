@@ -874,65 +874,34 @@ async function renderLiveTab(root, gid, apiToken) {
 const _origOpenServerDash = openServerDash;
 openServerDash = function (guildId) {
   _origOpenServerDash(guildId);
-  if (IS_DEMO || !apiBase()) {
-    // still offer the connect UI in real mode without a base
-    if (!IS_DEMO) {
-      const dash = document.getElementById("server-dash");
-      const tabs = dash?.querySelector(".sd-tabs");
-      const panes = dash?.querySelectorAll("#sd-tab-player, #sd-tab-admin");
-      if (dash && tabs && panes) {
-        const pane = document.createElement("div");
-        pane.id = "sd-tab-live";
-        pane.hidden = true;
-        dash.appendChild(pane);
-        tabs.insertAdjacentHTML("beforeend", '<button type="button" class="sd-tab" data-tab="live">⚡ Live Control</button>');
-        dash.querySelectorAll(".sd-tab").forEach((t) =>
-          t.addEventListener("click", () => {
-            const live = dash.querySelector("#sd-tab-live");
-            if (live) live.hidden = t.dataset.tab !== "live";
-          })
-        );
-        // render connect UI lazily on tab click
-        tabs.querySelectorAll("[data-tab='live']").forEach((t) =>
-          t.addEventListener("click", () => {
-            const live = dash.querySelector("#sd-tab-live");
-            if (!live) return;
-            live.hidden = false;
-            live.innerHTML = '<p class="live-note">⏳ connecting to your bot…</p>';
-            renderLiveTab(live, guildId, localStorage.getItem(TOKEN_KEY)).catch((e) => {
-              live.innerHTML = '<p class="live-note">⚠️ Live Control crashed: ' + esc(String(e)) + '</p>';
-            });
-          })
-        );
-      }
-    }
-    return;
-  }
-  // API base already configured — add the live tab with data
+  if (IS_DEMO || !apiBase()) return;
   const dash = document.getElementById("server-dash");
   const tabs = dash?.querySelector(".sd-tabs");
-  if (dash && tabs) {
-    const pane = document.createElement("div");
-    pane.id = "sd-tab-live";
-    pane.hidden = true;
-    dash.appendChild(pane);
-    tabs.insertAdjacentHTML("beforeend", '<button type="button" class="sd-tab" data-tab="live">⚡ Live Control</button>');
-    dash.querySelectorAll(".sd-tab").forEach((t) =>
-      t.addEventListener("click", () => {
-        const live = dash.querySelector("#sd-tab-live");
-        if (live) live.hidden = t.dataset.tab !== "live";
-      })
-    );
-    tabs.querySelectorAll("[data-tab='live']").forEach((t) =>
-      t.addEventListener("click", () => {
-        const live = dash.querySelector("#sd-tab-live");
-        if (!live) return;
-        live.hidden = false;
-        live.innerHTML = '<p class="live-note">⏳ connecting to your bot…</p>';
-        renderLiveTab(live, guildId, localStorage.getItem(TOKEN_KEY)).catch((e) => {
-          live.innerHTML = '<p class="live-note">⚠️ Live Control crashed: ' + esc(String(e)) + '</p>';
-        });
-      })
-    );
-  }
+  if (!dash || !tabs || dash.querySelector("#sd-tab-live")) return;
+
+  const pane = document.createElement("div");
+  pane.id = "sd-tab-live";
+  pane.hidden = true;
+  dash.appendChild(pane);
+  tabs.insertAdjacentHTML("beforeend", '<button type="button" class="sd-tab" data-tab="live">⚡ Live Control</button>');
+  const liveBtn = tabs.querySelector("[data-tab='live']");
+
+  const showLive = () => {
+    // own the whole tab switch: hide player/admin, show live, fix active styles
+    dash.querySelectorAll(".sd-tab").forEach((x) => x.classList.toggle("active", x.dataset.tab === "live"));
+    dash.querySelector("#sd-tab-player").hidden = true;
+    const adm = dash.querySelector("#sd-tab-admin");
+    if (adm) adm.hidden = true;
+    pane.hidden = false;
+    pane.innerHTML = '<p class="live-note">⏳ connecting to your bot…</p>';
+    renderLiveTab(pane, guildId, localStorage.getItem(TOKEN_KEY)).catch((e) => {
+      pane.innerHTML = '<p class="live-note">⚠️ Live Control crashed: ' + esc(String(e)) + '</p>';
+    });
+  };
+  liveBtn.addEventListener("click", showLive);
+
+  // when the original player/admin tabs are clicked, hide the live pane
+  dash.querySelectorAll(".sd-tab:not([data-tab='live'])").forEach((t) =>
+    t.addEventListener("click", () => { pane.hidden = true; })
+  );
 };
