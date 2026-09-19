@@ -729,7 +729,7 @@ async function renderLiveTab(root, gid, apiToken) {
     const msg = e && e.status === 401
       ? "Your Discord session expired — sign in again at the top of the page."
       : e && e.status === 403
-      ? "The bot couldn't confirm you as an admin in this server. Are you still a member there?"
+      ? "The bot refused access: " + (e.why ? esc(e.why) : "couldn't confirm you as an admin in this server.")
       : "API error: " + (e.error || e.status || e);
     root.innerHTML = `<p class="live-note">⚠️ ${esc(msg)}</p>
       <p class="live-note muted">Connecting via: <code>${esc(apiBase() || "(none)")}</code></p>
