@@ -476,7 +476,7 @@ function setupNavGlitch() {
       overlay.classList.add("active", "flash");
       setTimeout(() => {
         window.location.href = href;
-      }, 280);
+      }, 2000);
     });
   });
 }
