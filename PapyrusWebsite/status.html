@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Status · Error! Sans The Second</title>
+  <link rel="icon" href="favicon.gif" type="image/gif" />
+  <link rel="icon" href="favicon.ico" sizes="any" />
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <div class="page-transition" id="page-transition" aria-hidden="true"><div class="pt-glitch" data-text="LOADING…">LOADING…</div></div>
+  <div class="bg-image bg-dim" aria-hidden="true"></div>
+  <div class="bg-gradient" aria-hidden="true"></div>
+  <div class="bg-grid" aria-hidden="true"></div>
+  <div class="scanlines" aria-hidden="true"></div>
+
+  <nav class="nav">
+    <a class="logo" href="index.html" data-nav>ERROR!<span>SANS</span></a>
+    <div class="nav-links">
+      <a href="index.html" data-nav>Home</a>
+      <a href="commands.html" data-nav>Commands</a>
+      <a href="changelog.html" data-nav>Changelog</a>
+      <a href="status.html" class="active" data-nav>Status</a>
+      <a class="btn btn-sm" href="https://discord.com/oauth2/authorize?client_id=1538157742546616370&permissions=2147485696&scope=bot%20applications.commands" target="_blank" rel="noopener">Invite</a>
+    </div>
+  </nav>
+
+  <main class="page">
+    <div class="page-head">
+      <img class="bot-avatar sm" src="bot-avatar.gif" alt="" />
+      <div>
+        <h1 class="glitch-title" data-text="System Status">System Status</h1>
+        <p class="lead">Is the glitch still online?</p>
+      </div>
+    </div>
+    <section class="panel status-panel">
+      <div class="status-header">
+        <span class="dot" id="status-dot"></span>
+        <div>
+          <h2 id="status-title">Checking…</h2>
+          <p class="muted" id="status-sub">Fetching bot state</p>
+        </div>
+      </div>
+      <div class="status-grid">
+        <div class="stat"><span class="stat-label">Bot</span><span class="stat-value" id="stat-bot">—</span></div>
+        <div class="stat"><span class="stat-label">Gateway</span><span class="stat-value" id="stat-gateway">—</span></div>
+        <div class="stat"><span class="stat-label">Last check</span><span class="stat-value" id="stat-time">—</span></div>
+        <div class="stat"><span class="stat-label">Message</span><span class="stat-value" id="stat-msg">—</span></div>
+      </div>
+      <button type="button" class="btn btn-ghost" id="refresh-status">Refresh</button>
+      <p class="muted small">Set <code>state</code> in <code>script.js</code>. Support: <a href="https://discord.gg/5XzKz3guN8" target="_blank" rel="noopener">discord.gg/5XzKz3guN8</a></p>
+    </section>
+    <section class="panel">
+      <h2>Incidents</h2>
+      <ul class="incident-list" id="incident-list"><li class="muted">No open incidents reported.</li></ul>
+    </section>
+  </main>
+  <footer class="footer"><p><a href="index.html" data-nav>← Home</a></p></footer>
+  <script src="script.js"></script>
+</body>
+</html>
