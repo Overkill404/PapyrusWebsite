@@ -572,6 +572,8 @@ main > .dialogue, .steps + .dialogue, .panel + * .dialogue { }
   position: relative;
   background: #e8283f;
   border-color: #ff5a6e;
+  color: #ffffff;
+  text-shadow: 0 0 5px rgba(255,255,255,0.95), 0 0 12px rgba(255,255,255,0.55);
   box-shadow: 0 0 14px rgba(232,40,63,0.9), 0 0 34px rgba(232,40,63,0.55), inset 0 0 8px rgba(255,255,255,0.25);
   animation: signin-pulse 2.2s ease-in-out infinite;
 }

@@ -19,6 +19,10 @@ const BOT_AVATAR_URL = "";
 const CLIENT_ID = "1538157742546616370";
 const OAUTH_SCOPE = "identify guilds";
 const MANAGE_GUILD = 0x20; // permission bit needed to add the bot
+const ADMINISTRATOR = 0x8; // Administrator implicitly grants MANAGE_GUILD
+function isAdminOf(g) {
+  return !!g.owner || (parseInt(g.permissions || "0", 10) & (MANAGE_GUILD | ADMINISTRATOR)) !== 0;
+}
 const TOKEN_KEY = "papyrus_access_token";
 
 const DEMO_USER = { username: "CrispyNugget", global_name: "CRISPY NUGGET", id: "1", avatar: null, bot: true };
@@ -155,9 +159,9 @@ function renderAuth() {
     ? "bot-avatar.gif"
     : `https://cdn.discordapp.com/avatars/${ME.id}/${ME.avatar}.png?size=128`;
 
-  const adminGuilds = GUILDS.filter((g) => (parseInt(g.permissions || "0", 10) & MANAGE_GUILD) !== 0 || g.owner);
+  const adminGuilds = GUILDS.filter(isAdminOf);
   const cards = adminGuilds.map((g) => {
-    const canAdd = (parseInt(g.permissions || "0", 10) & MANAGE_GUILD) !== 0 || g.owner;
+    const canAdd = isAdminOf(g);
     const addBtn = canAdd
       ? `<a class="btn btn-sm" target="_blank" rel="noopener" href="https://discord.com/oauth2/authorize?client_id=${CLIENT_ID}&permissions=2147485696&scope=bot%20applications.commands&guild_id=${g.id}">Add Papyrus</a>`
       : `<span class="g-no-admin">needs admin</span>`;
@@ -193,7 +197,7 @@ function openServerDash(guildId) {
   const dash = document.getElementById("server-dash");
   if (!g || !dash) return;
   dash.hidden = false;
-  const isAdmin = (parseInt(g.permissions || "0", 10) & MANAGE_GUILD) !== 0 || g.owner;
+  const isAdmin = isAdminOf(g);
 
   dash.innerHTML = `
     <div class="sd-head">
@@ -692,6 +696,7 @@ async function renderLiveTab(root, gid, apiToken) {
         <div class="battle-preview" id="bp-out"></div>
       </div>
       <div class="live-card" style="grid-column: 1 / -1;"><h4>🛒 Shop Editor</h4><div id="boss-shop"></div></div>
+      <div class="live-card" style="grid-column: 1 / -1;"><h4>🐉 Boss Battles</h4><div id="boss-editor"></div></div>
     </div>`;
 
   const cfg = await apiFetch(`/api/guild/${gid}/config`, {}, apiToken);
@@ -784,6 +789,49 @@ async function renderLiveTab(root, gid, apiToken) {
       } catch (e) { sdToast("❌ " + (e.error || e)); }
     });
   } catch (e) { /* shop table optional */ }
+
+  // boss battles editor — create, list, and retire bosses (spawns in real battles)
+  try {
+    const bosses = await apiFetch(`/api/guild/${gid}/table/bosses?limit=100`, {}, apiToken);
+    const bwrap = root.querySelector("#boss-editor");
+    const brows = bosses.rows || [];
+    bwrap.innerHTML = `<table class="mini-table"><tr><th>Name</th><th>HP</th><th>ATK</th><th>DEF</th><th>XP</th><th>Gold</th><th>On</th><th></th></tr>
+      ${brows.map((r) => `<tr><td>${esc(r.name)}</td><td>${esc(r.hp)}</td><td>${esc(r.attack)}</td><td>${esc(r.defense)}</td><td>${esc(r.xp)}</td><td>${esc(r.gold)}</td><td>${r.enabled ? "✅" : "—"}</td>
+        <td><button type="button" class="mini-x" data-bdel="${r.id}">✕</button></td></tr>`).join("")}
+    </table>
+    <div class="live-form">
+      <input id="boss-name" placeholder="boss name" />
+      <input id="boss-hp" placeholder="hp" style="max-width:70px" value="300" />
+      <input id="boss-atk" placeholder="atk" style="max-width:60px" value="25" />
+      <input id="boss-def" placeholder="def" style="max-width:60px" value="5" />
+      <input id="boss-xp" placeholder="xp" style="max-width:60px" value="150" />
+      <input id="boss-gold" placeholder="gold" style="max-width:60px" value="80" />
+      <button type="button" class="btn btn-sm" id="boss-add">Add boss</button>
+    </div>
+    <p class="muted" style="margin:6px 0 0">New bosses spawn in wild battles with these stats. Use the Battle Preview panel above to test one before releasing it.</p>`;
+    bwrap.querySelectorAll("[data-bdel]").forEach((b) =>
+      b.addEventListener("click", async () => {
+        try {
+          await apiFetch(`/api/guild/${gid}/table/bosses/${b.dataset.bdel}`, { method: "DELETE" }, apiToken);
+          b.closest("tr").remove(); sdToast("💀 boss retired");
+        } catch (e) { sdToast("❌ " + (e.error || e)); }
+      })
+    );
+    bwrap.querySelector("#boss-add").addEventListener("click", async () => {
+      try {
+        await apiFetch(`/api/guild/${gid}/table/bosses`, { method: "POST", body: JSON.stringify({
+          name: bwrap.querySelector("#boss-name").value || "Mystery Boss",
+          hp: parseInt(bwrap.querySelector("#boss-hp").value, 10) || 300,
+          attack: parseInt(bwrap.querySelector("#boss-atk").value, 10) || 25,
+          defense: parseInt(bwrap.querySelector("#boss-def").value, 10) || 5,
+          xp: parseInt(bwrap.querySelector("#boss-xp").value, 10) || 150,
+          gold: parseInt(bwrap.querySelector("#boss-gold").value, 10) || 80,
+          spawn_rate: 10, enabled: 1, mercy_required: 5 }) }, apiToken);
+        sdToast("🐉 boss created! It can spawn in battles now.");
+        renderLiveTab(root, gid, apiToken);
+      } catch (e) { sdToast("❌ " + (e.error || e)); }
+    });
+  } catch (e) { /* bosses table optional */ }
 }
 
 // hook the Live Control tab into the server dashboard
