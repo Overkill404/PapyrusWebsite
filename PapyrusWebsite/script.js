@@ -21,7 +21,11 @@ const OAUTH_SCOPE = "identify guilds";
 const MANAGE_GUILD = 0x20; // permission bit needed to add the bot
 const ADMINISTRATOR = 0x8; // Administrator implicitly grants MANAGE_GUILD
 function isAdminOf(g) {
-  return !!g.owner || (parseInt(g.permissions || "0", 10) & (MANAGE_GUILD | ADMINISTRATOR)) !== 0;
+  if (g.owner) return true;
+  try {
+    const p = BigInt(g.permissions || "0"); // BigInt: Discord permission strings can exceed Number.MAX_SAFE_INTEGER
+    return (p & BigInt(MANAGE_GUILD)) !== 0n || (p & BigInt(ADMINISTRATOR)) !== 0n;
+  } catch (e) { return false; }
 }
 const TOKEN_KEY = "papyrus_access_token";
 
@@ -102,6 +106,16 @@ async function loadDiscordUser(token) {
   ME = await meRes.json();
   const gRes = await fetch("https://discord.com/api/v10/users/@me/guilds", { headers });
   GUILDS = gRes.ok ? await gRes.json() : [];
+  // Ground truth: ask the bot which servers this user really administers.
+  // Handles Administrator (0x8), Manage Guild, and ownership server-side —
+  // and only lists servers where Papyrus actually is.
+  try {
+    const mg = await apiFetch("/api/my-guilds", {}, token);
+    if (mg && mg.guilds && mg.guilds.length) {
+      GUILDS = mg.guilds.map((g) => ({ id: String(g.id), name: g.name, icon: g.icon || null,
+                                       owner: false, permissions: String(MANAGE_GUILD), hasBot: true }));
+    }
+  } catch (e) { /* bot API unreachable — keep the browser list */ }
   return true;
 }
 
@@ -161,10 +175,12 @@ function renderAuth() {
 
   const adminGuilds = GUILDS.filter(isAdminOf);
   const cards = adminGuilds.map((g) => {
-    const canAdd = isAdminOf(g);
-    const addBtn = canAdd
+    const canAdd = isAdminOf(g) && !g.hasBot;
+    const addBtn = g.hasBot
+      ? `<span class="g-no-admin" style="color:#2e7d32">✓ Papyrus is here</span>`
+      : (canAdd
       ? `<a class="btn btn-sm" target="_blank" rel="noopener" href="https://discord.com/oauth2/authorize?client_id=${CLIENT_ID}&permissions=2147485696&scope=bot%20applications.commands&guild_id=${g.id}">Add Papyrus</a>`
-      : `<span class="g-no-admin">needs admin</span>`;
+      : `<span class="g-no-admin">needs admin</span>`);
     return `<article class="g-card" data-guild="${g.id}">
       <div class="g-head">${guildIconHTML(g, 64)}<h3>${esc(g.name)}</h3></div>
       <div class="g-actions">${addBtn}
