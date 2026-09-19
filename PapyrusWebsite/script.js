@@ -50,9 +50,10 @@ function esc(s) {
 }
 
 function signInUrl() {
-  const redirect = canRedirect()
-    ? location.origin + location.pathname.replace(/index\.html?$/, "") 
-    : "";
+  // Discord only accepts REGISTERED redirect URIs — always go through the
+  // registered root, then bounce back to the page they started on.
+  const redirect = canRedirect() ? location.origin + "/" : "";
+  try { sessionStorage.setItem("auth_return", location.pathname); } catch (e) {}
   const u = new URL("https://discord.com/oauth2/authorize");
   u.searchParams.set("client_id", CLIENT_ID);
   u.searchParams.set("response_type", "token");
@@ -96,7 +97,19 @@ async function handleOAuthCallback() {
   history.replaceState(null, "", location.pathname + location.search);
   if (!token) return false;
   localStorage.setItem(TOKEN_KEY, token);
-  return await loadDiscordUser(token);
+  const ok = await loadDiscordUser(token);
+  if (ok) {
+    let back = null;
+    try {
+      back = sessionStorage.getItem("auth_return");
+      sessionStorage.removeItem("auth_return");
+    } catch (e) {}
+    if (back && back !== location.pathname && !/index\.html?$/i.test(back) && back !== "/") {
+      location.replace(back);
+      return true;
+    }
+  }
+  return ok;
 }
 
 async function loadDiscordUser(token) {
