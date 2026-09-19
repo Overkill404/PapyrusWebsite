@@ -98,7 +98,8 @@ code {
 .page-transition {
   position: fixed; inset: 0; z-index: 200;
   display: none; align-items: center; justify-content: center;
-  background: var(--bg);
+  background: rgba(5, 3, 3, 0.96); /* near-black: souls & bones pop */
+  backdrop-filter: blur(4px);
 }
 .page-transition.active { display: flex; }
 .pt-glitch {
@@ -109,7 +110,7 @@ code {
 }
 @keyframes pt-pulse { from { opacity: 0.55; } to { opacity: 1; } }
 .page-transition.flash { animation: pt-flash 0.28s linear; }
-@keyframes pt-flash { 0% { background: var(--bg); } 50% { background: rgba(255, 154, 60, 0.14); } 100% { background: var(--bg); } }
+@keyframes pt-flash { 0% { background: rgba(5,3,3,0.96); } 50% { background: rgba(232, 40, 63, 0.25); } 100% { background: rgba(5,3,3,0.96); } }
 
 /* ---------------- nav ---------------- */
 .nav {
