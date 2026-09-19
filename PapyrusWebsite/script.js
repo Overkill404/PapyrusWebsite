@@ -579,7 +579,7 @@ function renderAdminDir(root) {
   root.querySelectorAll(".fn-chip").forEach((c) =>
     c.addEventListener("click", () => {
       if (window.__papyrusOpenLive) {
-        window.__papyrusOpenLive();
+        window.__papyrusOpenLive(c.dataset.tool);
         sdToast(`🛡️ ${c.dataset.tool} — edit it in Live Control!`);
       } else {
         sdToast("Sign in and open a server dashboard to control this tool.");
@@ -678,7 +678,15 @@ function liveToggleHTML(key, val) {
 
 const TOGGLE_PREFIXES = ["webapi", "guard", "playerlog", "quiz", "autothread", "archive", "webhooklog", "skits", "rumor", "echo", "paper", "wanted", "npc", "faction", "stall", "music", "museum", "clanwar", "tryout", "bounty", "weather_", "jobs_enabled", "fish_enabled", "contracts_enabled", "hot_enabled", "maps_enabled", "bank_enabled", "upgrade_enabled", "rent_enabled", "cosmetics_enabled", "bribe_enabled", "auction_enabled", "bulk_enabled", "exchange_enabled", "clan_tax_enabled", "gift_enabled", "tip_enabled", "pbounty_enabled", "heist_enabled", "invest_enabled", "prestige_enabled", "quiet_hours", "zalgo", "invite_filter", "verify_gate", "account_age", "join_burst", "anti_nuke", "quarantine", "caps_limit", "mass_mention", "impersonation", "auto_dm"];
 
-async function renderLiveTab(root, gid, apiToken) {
+function toolFocusKeys(tool) {
+  // "Account Age Gate" -> candidate config-key fragments, longest first
+  const words = String(tool).toLowerCase().replace(/[^a-z0-9 ]/g, "").split(/\s+/).filter(Boolean);
+  const cands = [];
+  for (let n = words.length; n >= 1; n--) cands.push(words.slice(0, n).join("_"));
+  return cands;
+}
+
+async function renderLiveTab(root, gid, apiToken, focusTool) {
   if (IS_DEMO) {
     root.innerHTML = `<p class="live-note">⚡ Live Control talks to the real bot. Demo mode can't — sign in for real (after the site URL is in the bot app's OAuth redirects) and have the bot's API running.</p>`;
     return;
@@ -711,7 +719,7 @@ async function renderLiveTab(root, gid, apiToken) {
   }
 
   root.innerHTML = `<p class="live-note">⚡ LIVE — changes apply to your server immediately. Every action is audit-logged with your name.</p>
-    <div class="live-grid">
+    <div class="live-grid">${focusHTML}
       <div class="live-card"><h4>🎚️ Feature Toggles</h4><div id="live-toggles"><p class="muted">loading…</p></div></div>
       <div class="live-card"><h4>💰 Economy Grant</h4>
         <div class="live-form">
@@ -727,7 +735,9 @@ async function renderLiveTab(root, gid, apiToken) {
           <input id="mod-reason" placeholder="reason" />
           <select id="mod-sev" style="max-width:70px"><option>1</option><option>2</option><option>3</option></select>
           <button type="button" class="btn btn-sm" id="warn-btn">Warn</button>
-          <button type="button" class="btn btn-sm btn-ghost" id="to-btn">Timeout 10m</button>
+          <select id="mod-mins" style="max-width:110px"><option value="10">10 min</option><option value="30">30 min</option><option value="60">1 hour</option><option value="360">6 hours</option><option value="1440">1 day</option><option value="10080">7 days</option></select>
+          <button type="button" class="btn btn-sm btn-ghost" id="to-btn">⏱ Timeout</button>
+          <button type="button" class="btn btn-sm" style="background:#e8283f" id="ban-btn">Ban</button>
         </div>
       </div>
       <div class="live-card"><h4>⚔️ Battle Preview</h4>
@@ -766,8 +776,18 @@ async function renderLiveTab(root, gid, apiToken) {
     root.querySelector("#live-retry").addEventListener("click", () => renderLiveTab(root, gid, apiToken));
     return;
   }
+  let focusHTML = "";
+  const focusKeys = focusTool ? toolFocusKeys(focusTool) : null;
+  if (focusTool && focusKeys) {
+    const hits = Object.keys(conf).filter((k) => focusKeys.some((f) => f.length >= 4 && k.includes(f)));
+    focusHTML = `<div class="live-card" style="grid-column: 1 / -1;"><h4>🎯 ${esc(focusTool)} — settings</h4><div id="live-focus">${
+      hits.length ? hits.map((k) => liveToggleHTML(k, conf[k])).join("")
+      : '<p class="muted">This tool has no dedicated settings keys yet — use the toggles and tables below.</p>'
+    }</div></div>`;
+  }
+  const focusHits = focusTool ? new Set(Object.keys(conf).filter((k) => focusKeys.some((f) => f.length >= 4 && k.includes(f)))) : new Set();
   const toggleKeys = Object.keys(conf).filter((k) =>
-    k.endsWith("_enabled") || k.endsWith("_on") || TOGGLE_PREFIXES.some((p) => k.startsWith(p))
+    !focusHits.has(k) && (k.endsWith("_enabled") || k.endsWith("_on") || TOGGLE_PREFIXES.some((p) => k.startsWith(p)))
   );
   root.querySelector("#live-toggles").innerHTML = toggleKeys.length
     ? toggleKeys.map((k) => liveToggleHTML(k, conf[k])).join("")
@@ -792,16 +812,23 @@ async function renderLiveTab(root, gid, apiToken) {
   const warn = root.querySelector("#warn-btn");
   if (warn) warn.addEventListener("click", async () => {
     try {
-      await apiFetch(`/api/guild/${gid}/mod/warn`, { method: "POST", body: JSON.stringify({ user_id: root.querySelector("#mod-user").value, reason: root.querySelector("#mod-reason").value, severity: root.querySelector("#mod-sev").value }) }, apiToken);
       const r = await apiFetch(`/api/guild/${gid}/mod/warn`, { method: "POST", body: JSON.stringify({ user_id: root.querySelector("#mod-user").value, reason: root.querySelector("#mod-reason").value, severity: root.querySelector("#mod-sev").value }) }, apiToken);
       sdToast(r.escalated ? "🛡️ warning delivered — THEY HIT THE LIMIT and escalated to a strike!" : `🛡️ warning delivered (${r.active_warnings}/${r.escalates_at} toward a strike)`);
+    } catch (e) { sdToast("❌ " + (e.error || e)); }
+  });
+  const banBtn = root.querySelector("#ban-btn");
+  if (banBtn) banBtn.addEventListener("click", async () => {
+    try {
+      await apiFetch(`/api/guild/${gid}/mod/ban`, { method: "POST", body: JSON.stringify({ user_id: root.querySelector("#mod-user").value, reason: root.querySelector("#mod-reason").value }) }, apiToken);
+      sdToast("🔨 banned — they were DM'd first (if their DMs allow)");
     } catch (e) { sdToast("❌ " + (e.error || e)); }
   });
   const to = root.querySelector("#to-btn");
   if (to) to.addEventListener("click", async () => {
     try {
-      await apiFetch(`/api/guild/${gid}/mod/timeout`, { method: "POST", body: JSON.stringify({ user_id: root.querySelector("#mod-user").value, minutes: 10 }) }, apiToken);
-      sdToast("⏱️ timed out 10 minutes!");
+      const mins = parseInt(root.querySelector("#mod-mins").value, 10) || 10;
+      const r = await apiFetch(`/api/guild/${gid}/mod/timeout`, { method: "POST", body: JSON.stringify({ user_id: root.querySelector("#mod-user").value, minutes: mins, reason: root.querySelector("#mod-reason").value }) }, apiToken);
+      sdToast(`⏱️ timed out ${r.minutes} minutes (until <t:${r.until}>); they were DM'd`);
     } catch (e) { sdToast("❌ " + (e.error || e)); }
   });
 
@@ -987,7 +1014,7 @@ openServerDash = function (guildId) {
   tabs.insertAdjacentHTML("beforeend", '<button type="button" class="sd-tab" data-tab="live">⚡ Live Control</button>');
   const liveBtn = tabs.querySelector("[data-tab='live']");
 
-  const showLive = () => {
+  const showLive = (focusTool) => {
     // own the whole tab switch: hide player/admin, show live, fix active styles
     dash.querySelectorAll(".sd-tab").forEach((x) => x.classList.toggle("active", x.dataset.tab === "live"));
     dash.querySelector("#sd-tab-player").hidden = true;
@@ -995,7 +1022,7 @@ openServerDash = function (guildId) {
     if (adm) adm.hidden = true;
     pane.hidden = false;
     pane.innerHTML = '<p class="live-note">⏳ connecting to your bot…</p>';
-    renderLiveTab(pane, guildId, localStorage.getItem(TOKEN_KEY)).catch((e) => {
+    renderLiveTab(pane, guildId, localStorage.getItem(TOKEN_KEY), focusTool).catch((e) => {
       pane.innerHTML = '<p class="live-note">⚠️ Live Control crashed: ' + esc(String(e)) + '</p>';
     });
   };
