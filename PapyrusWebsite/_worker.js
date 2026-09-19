@@ -2,7 +2,7 @@
 // Netlify-style _redirects can't proxy external domains on Cloudflare, so this
 // worker forwards /api/* to the bot on WispByte (m42 web API) and serves the
 // static site for everything else.
-const BOT_API = "http://78.154.103.11:15657";
+const BOT_API = "http://78.154.103.11.nip.io:15657";
 
 export default {
   async fetch(request, env) {
