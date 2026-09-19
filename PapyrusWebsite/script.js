@@ -1,4 +1,4 @@
-console.log("PAPYRUS SITE BUILD v8");
+console.log("PAPYRUS SITE BUILD v9");
 const STATUS_CONFIG = {
   state: "online", // "online" | "offline" | "degraded"
   message: "The Great Papyrus is operational. Probably making puzzles.",
@@ -748,6 +748,30 @@ async function renderLiveTab(root, gid, apiToken, focusTool) {
         </div>
         <div class="battle-preview" id="bp-out"></div>
       </div>
+      <div class="live-card" style="grid-column: 1 / -1;"><h4>🛠️ Admin Tools — run from the web</h4>
+        <p class="muted" style="margin:0 0 8px">The Discord panel's heavy hitters, ported. Announcements, slowmode, mass role, jail — same machinery, same audit log.</p>
+        <div class="live-form">
+          <select id="tool-chan" style="max-width:200px"><option>loading channels…</option></select>
+          <input id="tool-msg" placeholder="announcement message" style="min-width:220px" />
+          <button type="button" class="btn btn-sm" id="tool-announce-btn">📢 Announce</button>
+        </div>
+        <div class="live-form">
+          <select id="tool-chan2" style="max-width:200px"><option>loading channels…</option></select>
+          <select id="tool-slow" style="max-width:130px"><option value="0">off</option><option value="5">5s</option><option value="10">10s</option><option value="30">30s</option><option value="60">1 min</option><option value="300">5 min</option></select>
+          <button type="button" class="btn btn-sm btn-ghost" id="tool-slow-btn">🐢 Set slowmode</button>
+        </div>
+        <div class="live-form">
+          <select id="tool-role" style="max-width:200px"><option>loading roles…</option></select>
+          <select id="tool-role-act" style="max-width:110px"><option value="add">give to all</option><option value="remove">remove from all</option></select>
+          <button type="button" class="btn btn-sm" style="background:#e8283f" id="tool-massrole-btn">⚠️ Apply</button>
+        </div>
+        <div class="live-form">
+          <input id="tool-jail-user" placeholder="user id" style="max-width:180px" />
+          <input id="tool-jail-reason" placeholder="reason" style="max-width:200px" />
+          <button type="button" class="btn btn-sm" id="tool-jail-btn">🔒 Jail</button>
+          <button type="button" class="btn btn-sm btn-ghost" id="tool-release-btn">🔓 Release</button>
+        </div>
+      </div>
       <div class="live-card" style="grid-column: 1 / -1;"><h4>🛒 Shop Editor</h4><div id="boss-shop"></div></div>
       <div class="live-card" style="grid-column: 1 / -1;"><h4>🐉 Boss Battles</h4><div id="boss-editor"></div></div>
       <div class="live-card" style="grid-column: 1 / -1;"><h4>🗄️ Game Data — edit everything</h4>
@@ -801,6 +825,34 @@ async function renderLiveTab(root, gid, apiToken, focusTool) {
     })
   );
 
+  (async () => {
+    try {
+      const meta = await apiFetch(`/api/guild/${gid}/meta`, {}, apiToken);
+      const opts = (sel, list) => { const el = root.querySelector(sel); if (el) el.innerHTML = list.map((x) => `<option value="${x.id}">#${esc(x.name)}</option>`).join(""); };
+      opts("#tool-chan", meta.channels); opts("#tool-chan2", meta.channels); opts("#tool-role", meta.roles);
+    } catch (e) { const el = root.querySelector("#tool-chan"); if (el) el.innerHTML = `<option>channels need the new m42</option>`; }
+  })();
+  const _toolDo = async (path, body, okMsg, confirmMsg) => {
+    if (confirmMsg && !window.confirm(confirmMsg)) return;
+    try { const r = await apiFetch(`/api/guild/${gid}${path}`, { method: "POST", body: JSON.stringify(body) }, apiToken); sdToast(okMsg(r)); }
+    catch (e) { sdToast("❌ " + (e.error || e)); }
+  };
+  root.querySelector("#tool-announce-btn")?.addEventListener("click", () => _toolDo("/tools/announce",
+    { channel_id: root.querySelector("#tool-chan").value, message: root.querySelector("#tool-msg").value },
+    () => "📢 announced!"));
+  root.querySelector("#tool-slow-btn")?.addEventListener("click", () => _toolDo("/tools/slowmode",
+    { channel_id: root.querySelector("#tool-chan2").value, seconds: parseInt(root.querySelector("#tool-slow").value, 10) },
+    (r) => `🐢 slowmode set to ${r.seconds}s`));
+  root.querySelector("#tool-massrole-btn")?.addEventListener("click", () => _toolDo("/tools/massrole",
+    { role_id: root.querySelector("#tool-role").value, action: root.querySelector("#tool-role-act").value },
+    (r) => `✅ ${r.changed} members updated${r.failed ? `, ${r.failed} failed` : ""}`,
+    "This gives/removes the role from EVERY member. Sure?"));
+  root.querySelector("#tool-jail-btn")?.addEventListener("click", () => _toolDo("/tools/jail",
+    { user_id: root.querySelector("#tool-jail-user").value, reason: root.querySelector("#tool-jail-reason").value },
+    () => "🔒 jailed — roles stripped, /release or the Release button restores them"));
+  root.querySelector("#tool-release-btn")?.addEventListener("click", () => _toolDo("/tools/release",
+    { user_id: root.querySelector("#tool-jail-user").value },
+    () => "🔓 released — roles restored"));
   const grant = root.querySelector("#grant-btn");
   if (grant) grant.addEventListener("click", async () => {
     try {
