@@ -601,3 +601,231 @@ function setupBanter() {
 }
 
 document.addEventListener("DOMContentLoaded", () => setupBanter());
+
+/* =====================================================================
+   LIVE CONTROL — dashboard v2, wired to the bot's web API (m42)
+===================================================================== */
+function apiBase() {
+  return (window.PAPYRUS_API_BASE || localStorage.getItem("papyrus_api_base") || "").replace(/\/$/, "");
+}
+
+async function apiFetch(path, opts = {}, token = null) {
+  const base = apiBase();
+  if (!base) throw new Error("no-api-base");
+  const headers = { "Content-Type": "application/json", ...(opts.headers || {}) };
+  if (token) headers.Authorization = "Bearer " + token;
+  const res = await fetch(base + path, { ...opts, headers });
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) throw new Object({ status: res.status, ...data });
+  return data;
+}
+
+function liveToggleHTML(key, val) {
+  const on = String(val) === "1" || String(val).toLowerCase() === "true";
+  return `<div class="toggle-row">
+    <code>${esc(key)}</code>
+    <label class="switch"><input type="checkbox" data-cfg="${esc(key)}" ${on ? "checked" : ""} /><i></i></label>
+  </div>`;
+}
+
+const TOGGLE_PREFIXES = ["webapi", "guard", "playerlog", "quiz", "autothread", "archive", "webhooklog", "skits", "rumor", "echo", "paper", "wanted", "npc", "faction", "stall", "music", "museum", "clanwar", "tryout", "bounty", "weather_", "jobs_enabled", "fish_enabled", "contracts_enabled", "hot_enabled", "maps_enabled", "bank_enabled", "upgrade_enabled", "rent_enabled", "cosmetics_enabled", "bribe_enabled", "auction_enabled", "bulk_enabled", "exchange_enabled", "clan_tax_enabled", "gift_enabled", "tip_enabled", "pbounty_enabled", "heist_enabled", "invest_enabled", "prestige_enabled", "quiet_hours", "zalgo", "invite_filter", "verify_gate", "account_age", "join_burst", "anti_nuke", "quarantine", "caps_limit", "mass_mention", "impersonation", "auto_dm"];
+
+async function renderLiveTab(root, gid, apiToken) {
+  if (IS_DEMO) {
+    root.innerHTML = `<p class="live-note">⚡ Live Control talks to the real bot. Demo mode can't — sign in for real (after the site URL is in the bot app's OAuth redirects) and have the bot's API running.</p>`;
+    return;
+  }
+  let base = apiBase();
+  let online = false;
+  if (base) {
+    try { await apiFetch("/api/health", {}, apiToken); online = true; } catch (e) { online = false; }
+  }
+  if (!online) {
+    root.innerHTML = `
+      <p class="live-note">⚡ <strong>Live Control</strong> edits your server straight from the website — it needs the bot's API address. Paste it once (it's your bot host's IP/domain + port, e.g. <code>http://your-wispbyte-server:8080</code>).</p>
+      <div class="api-row">
+        <input id="api-base-input" placeholder="http://bot-host:8080" value="${esc(base)}" />
+        <button type="button" class="btn btn-sm" id="api-base-save">Connect</button>
+      </div>
+      <p class="live-note">No address yet? The bot prints <code>web_api: serving on port …</code> in its console when it starts.</p>`;
+    root.querySelector("#api-base-save").addEventListener("click", () => {
+      const v = root.querySelector("#api-base-input").value.trim();
+      if (v) localStorage.setItem("papyrus_api_base", v);
+      renderLiveTab(root, gid, apiToken);
+    });
+    return;
+  }
+
+  root.innerHTML = `<p class="live-note">⚡ LIVE — changes apply to your server immediately. Every action is audit-logged with your name.</p>
+    <div class="live-grid">
+      <div class="live-card"><h4>🎚️ Feature Toggles</h4><div id="live-toggles"><p class="muted">loading…</p></div></div>
+      <div class="live-card"><h4>💰 Economy Grant</h4>
+        <div class="live-form">
+          <input id="grant-user" placeholder="user id" />
+          <input id="grant-amount" placeholder="amount" style="max-width:90px" />
+          <button type="button" class="btn btn-sm" id="grant-btn">Give</button>
+        </div>
+        <div id="shop-wrap"></div>
+      </div>
+      <div class="live-card"><h4>🛡️ Moderation</h4>
+        <div class="live-form">
+          <input id="mod-user" placeholder="user id" />
+          <input id="mod-reason" placeholder="reason" />
+          <select id="mod-sev" style="max-width:70px"><option>1</option><option>2</option><option>3</option></select>
+          <button type="button" class="btn btn-sm" id="warn-btn">Warn</button>
+          <button type="button" class="btn btn-sm btn-ghost" id="to-btn">Timeout 10m</button>
+        </div>
+      </div>
+      <div class="live-card"><h4>⚔️ Battle Preview</h4>
+        <div class="live-form">
+          <input id="bp-boss" placeholder="boss id" style="max-width:80px" />
+          <input id="bp-level" placeholder="your level" style="max-width:80px" value="10" />
+          <button type="button" class="btn btn-sm" id="bp-btn">Simulate</button>
+        </div>
+        <div class="battle-preview" id="bp-out"></div>
+      </div>
+      <div class="live-card" style="grid-column: 1 / -1;"><h4>🛒 Shop Editor</h4><div id="boss-shop"></div></div>
+    </div>`;
+
+  const cfg = await apiFetch(`/api/guild/${gid}/config`, {}, apiToken);
+  const conf = cfg.config || {};
+  const toggleKeys = Object.keys(conf).filter((k) =>
+    k.endsWith("_enabled") || k.endsWith("_on") || TOGGLE_PREFIXES.some((p) => k.startsWith(p))
+  );
+  root.querySelector("#live-toggles").innerHTML = toggleKeys.length
+    ? toggleKeys.map((k) => liveToggleHTML(k, conf[k])).join("")
+    : '<p class="muted">No toggles found.</p>';
+  root.querySelectorAll("input[data-cfg]").forEach((inp) =>
+    inp.addEventListener("change", async () => {
+      try {
+        await apiFetch(`/api/guild/${gid}/config`, { method: "POST", body: JSON.stringify({ [inp.dataset.cfg]: inp.checked ? 1 : 0 }) }, apiToken);
+        sdToast(`🎚️ ${inp.dataset.cfg} = ${inp.checked ? "ON" : "OFF"} — applied!`);
+      } catch (e) { sdToast("❌ failed: " + (e.error || e)); }
+    })
+  );
+
+  const grant = root.querySelector("#grant-btn");
+  if (grant) grant.addEventListener("click", async () => {
+    try {
+      await apiFetch(`/api/guild/${gid}/economy/grant`, { method: "POST", body: JSON.stringify({ user_id: root.querySelector("#grant-user").value, amount: root.querySelector("#grant-amount").value, reason: "website dashboard" }) }, apiToken);
+      sdToast("💰 granted!");
+    } catch (e) { sdToast("❌ " + (e.error || e)); }
+  });
+
+  const warn = root.querySelector("#warn-btn");
+  if (warn) warn.addEventListener("click", async () => {
+    try {
+      await apiFetch(`/api/guild/${gid}/mod/warn`, { method: "POST", body: JSON.stringify({ user_id: root.querySelector("#mod-user").value, reason: root.querySelector("#mod-reason").value, severity: root.querySelector("#mod-sev").value }) }, apiToken);
+      sdToast("🛡️ warning delivered!");
+    } catch (e) { sdToast("❌ " + (e.error || e)); }
+  });
+  const to = root.querySelector("#to-btn");
+  if (to) to.addEventListener("click", async () => {
+    try {
+      await apiFetch(`/api/guild/${gid}/mod/timeout`, { method: "POST", body: JSON.stringify({ user_id: root.querySelector("#mod-user").value, minutes: 10 }) }, apiToken);
+      sdToast("⏱️ timed out 10 minutes!");
+    } catch (e) { sdToast("❌ " + (e.error || e)); }
+  });
+
+  const bp = root.querySelector("#bp-btn");
+  if (bp) bp.addEventListener("click", async () => {
+    try {
+      const sim = await apiFetch(`/api/guild/${gid}/battle/preview`, { method: "POST", body: JSON.stringify({ boss_id: root.querySelector("#bp-boss").value, player_level: root.querySelector("#bp-level").value }) }, apiToken);
+      const bmax = sim.boss.hp, pmax = sim.player.hp;
+      let pNow = pmax, bNow = bmax;
+      root.querySelector("#bp-out").innerHTML = sim.turns.map((t) => {
+        bNow = t.boss_hp; pNow = t.player_hp;
+        return `<div class="bp-turn"><span class="t">T${t.turn}</span>
+          <div class="bp-bar you"><i style="width:${(pNow / pmax) * 100}%"></i></div>
+          <div class="bp-bar boss"><i style="width:${(bNow / bmax) * 100}%"></i></div>
+          <span>-${t.player_dmg}</span></div>`;
+      }).join("") + `<p class="bp-verdict">${sim.result === "player" ? "🏆 PLAYER WINS (simulated)" : "💀 BOSS STANDS (simulated)"}</p>`;
+    } catch (e) { sdToast("❌ " + (e.error || e)); }
+  });
+
+  // shop editor
+  try {
+    const shop = await apiFetch(`/api/guild/${gid}/table/economy_shop?limit=50`, {}, apiToken);
+    const wrap = root.querySelector("#boss-shop");
+    const rows = shop.rows || [];
+    wrap.innerHTML = `<table class="mini-table"><tr><th>Item</th><th>Cost</th><th>Stock</th><th></th></tr>
+      ${rows.map((r) => `<tr><td>${esc(r.emoji || "")} ${esc(r.name)}</td><td>${esc(r.cost)}</td><td>${esc(r.stock)}</td>
+        <td><button type="button" class="mini-x" data-del="${r.id}">✕</button></td></tr>`).join("")}
+    </table>
+    <div class="live-form">
+      <input id="shop-name" placeholder="name" />
+      <input id="shop-emoji" placeholder="🍕" style="max-width:60px" />
+      <input id="shop-cost" placeholder="cost" style="max-width:80px" />
+      <button type="button" class="btn btn-sm" id="shop-add">Add item</button>
+    </div>`;
+    wrap.querySelectorAll("[data-del]").forEach((b) =>
+      b.addEventListener("click", async () => {
+        try {
+          await apiFetch(`/api/guild/${gid}/table/economy_shop/${b.dataset.del}`, { method: "DELETE" }, apiToken);
+          b.closest("tr").remove(); sdToast("🗑️ item removed");
+        } catch (e) { sdToast("❌ " + (e.error || e)); }
+      })
+    );
+    wrap.querySelector("#shop-add").addEventListener("click", async () => {
+      try {
+        await apiFetch(`/api/guild/${gid}/table/economy_shop`, { method: "POST", body: JSON.stringify({
+          name: wrap.querySelector("#shop-name").value, emoji: wrap.querySelector("#shop-emoji").value || "🍕",
+          cost: wrap.querySelector("#shop-cost").value || "100", description: "added via website",
+          reward_type: "item", reward_amount: 1, stock: -1, enabled: 1, sort_order: 99 }) }, apiToken);
+        sdToast("🛒 item added to the shop!");
+        renderLiveTab(root, gid, apiToken);
+      } catch (e) { sdToast("❌ " + (e.error || e)); }
+    });
+  } catch (e) { /* shop table optional */ }
+}
+
+// hook the Live Control tab into the server dashboard
+const _origOpenServerDash = openServerDash;
+openServerDash = function (guildId) {
+  _origOpenServerDash(guildId);
+  if (IS_DEMO || !apiBase()) {
+    // still offer the connect UI in real mode without a base
+    if (!IS_DEMO) {
+      const dash = document.getElementById("server-dash");
+      const tabs = dash?.querySelector(".sd-tabs");
+      const panes = dash?.querySelectorAll("#sd-tab-player, #sd-tab-admin");
+      if (dash && tabs && panes) {
+        const pane = document.createElement("div");
+        pane.id = "sd-tab-live";
+        pane.hidden = true;
+        dash.querySelector("#sd-tab-admin")?.after(pane);
+        tabs.insertAdjacentHTML("beforeend", '<button type="button" class="sd-tab" data-tab="live">⚡ Live Control</button>');
+        dash.querySelectorAll(".sd-tab").forEach((t) =>
+          t.addEventListener("click", () => {
+            const live = dash.querySelector("#sd-tab-live");
+            if (live) live.hidden = t.dataset.tab !== "live";
+          })
+        );
+        // render connect UI lazily on tab click
+        tabs.querySelectorAll("[data-tab='live']").forEach((t) =>
+          t.addEventListener("click", () => renderLiveTab(dash.querySelector("#sd-tab-live"), guildId, localStorage.getItem(TOKEN_KEY)))
+        );
+      }
+    }
+    return;
+  }
+  // API base already configured — add the live tab with data
+  const dash = document.getElementById("server-dash");
+  const tabs = dash?.querySelector(".sd-tabs");
+  if (dash && tabs) {
+    const pane = document.createElement("div");
+    pane.id = "sd-tab-live";
+    pane.hidden = true;
+    dash.querySelector("#sd-tab-admin")?.after(pane);
+    tabs.insertAdjacentHTML("beforeend", '<button type="button" class="sd-tab" data-tab="live">⚡ Live Control</button>');
+    dash.querySelectorAll(".sd-tab").forEach((t) =>
+      t.addEventListener("click", () => {
+        const live = dash.querySelector("#sd-tab-live");
+        if (live) live.hidden = t.dataset.tab !== "live";
+      })
+    );
+    tabs.querySelectorAll("[data-tab='live']").forEach((t) =>
+      t.addEventListener("click", () => renderLiveTab(dash.querySelector("#sd-tab-live"), guildId, localStorage.getItem(TOKEN_KEY)))
+    );
+  }
+};
